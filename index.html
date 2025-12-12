@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30 Years of Echoes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Noto+Sans+Gujarati:wght@400;700&display=swap');
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050510;
+            color: white;
+            font-family: 'Montserrat', 'Noto Sans Gujarati', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- THE CENTER SUN (30) --- */
+        .center-sun {
+            font-size: 15vw;
+            font-weight: 700;
+            background: linear-gradient(45deg, #ff00cc, #3333ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            z-index: 10;
+            text-shadow: 0 0 60px rgba(100, 50, 255, 0.3);
+            cursor: default;
+            user-select: none;
+            position: relative;
+        }
+
+        /* --- THE STARS (DOTS) --- */
+        .star {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            z-index: 20;
+        }
+
+        /* Hover effect: Show tooltip and glow */
+        .star:hover {
+            transform: scale(1.5);
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            z-index: 30;
+        }
+
+        /* Active playing state */
+        .star.playing {
+            background-color: #00ffcc !important;
+            box-shadow: 0 0 25px #00ffcc, 0 0 50px #00ffcc !important;
+            transform: scale(1.5);
+        }
+
+        /* Search Match state */
+        .star.matched {
+            background-color: #ff00cc !important; /* Hot Pink for search results */
+            box-shadow: 0 0 30px #ff00cc !important;
+            transform: scale(1.8);
+            z-index: 40;
+            animation: pulse-match 1s infinite alternate;
+        }
+
+        @keyframes pulse-match {
+            from { transform: scale(1.8); }
+            to { transform: scale(2.2); }
+        }
+
+        /* --- TOOLTIP (Name Label) --- */
+        .star::after {
+            content: attr(data-name); /* Pulls name from HTML */
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            color: #fff;
+        }
+
+        .star:hover::after, .star.playing::after {
+            opacity: 1;
+        }
+
+        /* --- SEARCH BAR UI --- */
+        .search-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: background 0.3s;
+        }
+
+        .search-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .search-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .search-input {
+            width: 0;
+            padding: 0;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 16px;
+            margin-left: 10px;
+            transition: width 0.4s ease;
+            outline: none;
+            border-bottom: 1px solid transparent;
+        }
+
+        .search-container.active .search-input {
+            width: 200px;
+            padding: 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        /* --- RIPPLE EFFECT --- */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            transform: scale(0);
+            animation: ripple-anim 1s linear;
+            pointer-events: none; 
+        }
+
+        @keyframes ripple-anim {
+            to { transform: scale(5); opacity: 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="search-container" id="searchContainer">
+        <div class="search-icon" onclick="toggleSearch()">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </div>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search name..." onkeyup="filterStars()">
+    </div>
+
+    <div class="center-sun">30</div>
+
+    <script>
+        // ---------------------------------------------------------
+        // CONFIGURATION: EDIT THIS LIST BELOW
+        // "name" is what shows up in search and tooltip
+        // ---------------------------------------------------------
+        const wishes = [
+            { name: "Amitamami & Rajumama", audio: "Amita Raju.mp3" },
+            { name: "Asmi & Hiral", audio: "Asmi Hiral.mp3" },
+            { name: "Bhargavmama", audio: "bhargav.mp3" },
+            { name: "Bhawna", audio: "bhawna.mp3" },
+            { name: "Binita mummy & Dhanu daddy", audio: "nani.mp3" },
+            // ... Add your 30+ files here
+        ];
+
+        const body = document.querySelector('body');
+        let currentAudio = null;
+
+        function createGalaxy() {
+            wishes.forEach((wish, index) => {
+                const el = document.createElement('div');
+                el.classList.add('star');
+                el.setAttribute('data-name', wish.name); // Stores name for tooltip
+                el.setAttribute('data-id', index); // ID for finding it later
+                
+                // Random Size for variety (between 8px and 16px)
+                const size = 8 + Math.random() * 8;
+                el.style.width = `${size}px`;
+                el.style.height = `${size}px`;
+
+                // Random Positioning
+                const angle = Math.random() * Math.PI * 2;
+                // Scatter them further out (20% to 48% from center)
+                const distance = 20 + Math.random() * 28; 
+                const x = 50 + distance * Math.cos(angle); 
+                const y = 50 + distance * Math.sin(angle); 
+                
+                el.style.left = x + '%';
+                el.style.top = y + '%';
+
+                // Float Animation
+                el.style.animation = `float ${3 + Math.random() * 5}s ease-in-out infinite`;
+                el.style.animationDelay = `-${Math.random() * 5}s`;
+
+                // Click to Play
+                el.addEventListener('click', (e) => {
+                    playWish(wish.audio, el);
+                    createRipple(e, el);
+                });
+
+                body.appendChild(el);
+            });
+        }
+
+        function playWish(filename, element) {
+            // Stop previous
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                document.querySelectorAll('.star').forEach(d => d.classList.remove('playing'));
+            }
+
+            // Play new
+            currentAudio = new Audio(filename);
+            currentAudio.play();
+            element.classList.add('playing');
+
+            currentAudio.onended = () => {
+                element.classList.remove('playing');
+            };
+        }
+
+        // --- SEARCH FUNCTIONS ---
+        function toggleSearch() {
+            const container = document.getElementById('searchContainer');
+            const input = document.getElementById('searchInput');
+            container.classList.toggle('active');
+            if(container.classList.contains('active')) {
+                input.focus();
+            }
+        }
+
+        function filterStars() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const stars = document.querySelectorAll('.star');
+
+            stars.forEach(star => {
+                const name = star.getAttribute('data-name').toLowerCase();
+                if (input.length > 0 && name.includes(input)) {
+                    star.classList.add('matched');
+                } else {
+                    star.classList.remove('matched');
+                }
+            });
+        }
+
+        function createRipple(event, element) {
+            const ripple = document.createElement("span");
+            ripple.classList.add("ripple");
+            const rect = element.getBoundingClientRect();
+            
+            // Center the ripple on the star
+            ripple.style.left = `${rect.left}px`;
+            ripple.style.top = `${rect.top}px`;
+            ripple.style.width = `${rect.width}px`;
+            ripple.style.height = `${rect.height}px`;
+            
+            body.appendChild(ripple);
+            setTimeout(() => ripple.remove(), 1000);
+        }
+
+        // Start
+        createGalaxy();
+
+    </script>
+</body>
+</html>
