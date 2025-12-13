@@ -11,8 +11,7 @@
             margin: 0;
             padding: 0;
             background-color: #050510;
-            /* Deep Space Gradient */
-            background-image: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #050510 80%);
+            background-image: radial-gradient(circle at 50% 50%, #24244a 0%, #09091f 60%, #000000 100%);
             color: white;
             font-family: 'Montserrat', 'Noto Sans Gujarati', sans-serif;
             overflow: hidden;
@@ -22,11 +21,10 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            /* Prevent rubber-banding on mobile */
             overscroll-behavior: none; 
         }
 
-        /* --- THE GALAXY CONTAINER (For Parallax Movement) --- */
+        /* Container for Parallax */
         #galaxy-container {
             position: relative;
             width: 100%;
@@ -34,157 +32,116 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.1s ease-out; /* Smooth movement */
+            transition: transform 0.2s cubic-bezier(0.215, 0.61, 0.355, 1); /* Smoother transition for sensors */
             transform-style: preserve-3d;
+            will-change: transform;
         }
 
         /* --- THE CENTER IMAGE --- */
         .center-img {
-            width: 25vw;      
-            max-width: 350px; 
-            min-width: 150px; 
+            width: 28vw;      
+            max-width: 380px; 
+            min-width: 180px; 
             height: auto;     
             object-fit: contain;
             z-index: 10;
-            
-            /* Rounded Edges & Glow */
-            border-radius: 30px; 
-            box-shadow: 0 0 50px rgba(50, 20, 150, 0.4);
-            
+            border-radius: 40px; 
+            filter: drop-shadow(0 0 40px rgba(80, 40, 200, 0.5));
             user-select: none;
             pointer-events: none; 
             transition: transform 0.5s ease;
         }
 
-        /* --- THE STARS (DOTS) --- */
-        .star {
+        /* --- THE NEBULA PARTICLES --- */
+        .particle {
             position: absolute;
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(200, 200, 255, 0.6));
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             cursor: pointer;
-            transition: background-color 0.3s, transform 0.3s;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 0 10px rgba(255,255,255,0.5);
             z-index: 20;
-            /* Enhance touch target for mobile */
-            padding: 5px; 
-            background-clip: content-box;
+            transition: all 0.4s ease-out;
+            box-sizing: border-box; 
         }
 
-        /* IDLE ANIMATION: Drifting */
+        /* IDLE ANIMATION */
         @keyframes drift {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(15px, -15px); }
-            50% { transform: translate(-5px, 20px); }
-            75% { transform: translate(-20px, -5px); }
-            100% { transform: translate(0, 0); }
+            0% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(20px, -15px) rotate(5deg); }
+            66% { transform: translate(-10px, 25px) rotate(-5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
         }
 
-        /* Hover effect */
-        .star:hover {
-            transform: scale(1.6) !important; 
-            background-color: #fff;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 1);
+        .particle:hover {
+            transform: scale(1.3) !important; 
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 0 35px rgba(255, 255, 255, 0.8), inset 0 0 15px white;
             z-index: 40;
+            border-color: rgba(255,255,255,0.6);
         }
 
-        /* --- PLAYING STATE (Audio Visualizer Effect) --- */
-        .star.playing {
-            background-color: #00ffcc !important;
-            box-shadow: 0 0 20px #00ffcc;
+        /* --- PLAYING STATE --- */
+        .particle.playing {
+            background: radial-gradient(circle at 30% 30%, #aaffff, #00ffcc);
+            box-shadow: 0 0 40px #00ffcc, 0 0 80px rgba(0, 255, 204, 0.6), inset 0 0 20px #ffffff;
             z-index: 35;
-            
-            /* Stop drifting, start vibrating to simulate sound source */
-            animation: vibration 0.5s infinite alternate ease-in-out !important; 
+            border-color: transparent;
+            animation: organic-pulse 3s ease-in-out infinite alternate !important;
         }
 
-        @keyframes vibration {
-            from { transform: scale(1.4); }
-            to { transform: scale(1.5); }
-        }
-
-        /* Wave 1: Fast inner ripple */
-        .star.playing::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            border: 1px solid rgba(0, 255, 204, 0.8);
-            animation: wave-ripple 1.2s infinite ease-out;
-            z-index: -1;
-        }
-
-        /* Wave 2: Large outer ripple */
-        .star.playing::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%; height: 100%;
-            border-radius: 50%;
-            border: 1px solid rgba(0, 255, 204, 0.4);
-            animation: wave-ripple 2s infinite ease-out; 
-            animation-delay: 0.4s; 
-            z-index: -2;
-        }
-
-        /* Large Ripple Animation (3x size) */
-        @keyframes wave-ripple {
-            0% {
-                width: 100%; height: 100%;
-                opacity: 1; border-width: 2px;
-            }
-            100% {
-                width: 450%; height: 450%;
-                opacity: 0; border-width: 0px;
-            }
+        @keyframes organic-pulse {
+            0% { transform: scale(1.2); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+            50% { transform: scale(1.35); border-radius: 40% 60% 70% 30% / 50% 60% 30% 60%; }
+            100% { transform: scale(1.2); border-radius: 70% 30% 50% 50% / 30% 70% 60% 40%; }
         }
 
         /* --- SEARCH MATCH STATE --- */
-        .star.matched {
-            background-color: #ff00cc !important;
-            box-shadow: 0 0 40px #ff00cc !important;
+        .particle.matched {
+            background: #ff00cc !important;
+            box-shadow: 0 0 50px #ff00cc, inset 0 0 20px white !important;
             z-index: 50;
-            animation: pulse-search 0.8s infinite alternate !important;
+            animation: pulse-search 1s infinite alternate !important;
         }
 
         @keyframes pulse-search {
-            from { transform: scale(1.8); }
-            to { transform: scale(2.2); }
+            from { transform: scale(1.5); }
+            to { transform: scale(1.8); }
         }
         
-        /* New Tooltip Logic */
-        .star-label {
+        /* Tooltip Style */
+        .particle-label {
             position: absolute;
-            bottom: 30px;
+            bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 5px 12px;
-            border-radius: 6px;
+            background: rgba(10, 10, 30, 0.85);
+            padding: 6px 14px;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: 600;
             white-space: nowrap;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s;
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: opacity 0.3s, transform 0.3s;
+            color: rgba(255,255,255,0.9);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             z-index: 100;
+            letter-spacing: 0.5px;
         }
 
-        .star:hover .star-label, .star.playing .star-label {
+        .particle:hover .particle-label, .particle.playing .particle-label {
             opacity: 1;
+            transform: translateX(-50%) translateY(-5px); 
         }
 
-        /* --- SEARCH BAR UI (Top Right) --- */
+        /* --- SEARCH BAR UI --- */
         .search-container {
             position: absolute;
             top: 30px;
             right: 30px; 
-            z-index: 200; /* Highest z-index */
+            z-index: 200;
             display: flex;
             align-items: center;
             flex-direction: row-reverse; 
@@ -207,13 +164,13 @@
         .search-icon:hover {
             background: rgba(255, 255, 255, 0.25);
             transform: scale(1.1);
-            box-shadow: 0 0 15px rgba(255,255,255,0.3);
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
         }
 
         .search-icon svg {
             width: 24px;
             height: 24px;
-            fill: white;
+            fill: rgba(255,255,255,0.9);
         }
 
         .search-input {
@@ -229,6 +186,7 @@
             border-bottom: 1px solid transparent;
             text-align: right; 
             font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
         }
 
         .search-container.active .search-input {
@@ -236,6 +194,20 @@
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.6);
         }
+        
+        /* Hint text for first interaction */
+        .tap-hint {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            opacity: 0.5;
+            font-size: 12px;
+            pointer-events: none;
+            animation: fadeOut 5s forwards;
+            animation-delay: 3s;
+        }
+        @keyframes fadeOut { to { opacity: 0; } }
 
     </style>
 </head>
@@ -245,17 +217,19 @@
         <div class="search-icon" onclick="toggleSearch()">
             <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         </div>
-        <input type="text" class="search-input" id="searchInput" placeholder="Search name..." onkeyup="filterStars()">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search name..." onkeyup="filterParticles()">
     </div>
 
     <div id="galaxy-container">
         <img src="image.png" alt="30" class="center-img" onerror="this.style.display='none'; document.querySelector('.fallback-text').style.display='block'">
         <div class="center-sun fallback-text" style="display:none; font-size: 15vw; font-weight: 700; background: linear-gradient(45deg, #ff00cc, #3333ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">30</div>
     </div>
+    
+    <div class="tap-hint">Tap anywhere to enable audio & motion</div>
 
     <script>
         // ---------------------------------------------------------
-        // CONFIGURATION
+        // DATA CONFIGURATION
         // ---------------------------------------------------------
         const wishes = [
             { name: "Bhargavmama", audio: "bhargav.ogg" },
@@ -321,26 +295,37 @@
         let currentAudio = null;
         let currentPlayingUrl = null; 
 
+        // Helper to generate random organic shapes
+        function getRandomBlobShape() {
+            const r1 = Math.floor(40 + Math.random() * 30);
+            const r2 = Math.floor(40 + Math.random() * 30);
+            const r3 = Math.floor(40 + Math.random() * 30);
+            const r4 = Math.floor(40 + Math.random() * 30);
+            return `${r1}% ${100-r1}% ${r2}% ${100-r2}% / ${r3}% ${r4}% ${100-r4}% ${100-r3}%`;
+        }
+
         function createGalaxy() {
             wishes.forEach((wish, index) => {
                 const el = document.createElement('div');
-                el.classList.add('star');
+                el.classList.add('particle');
                 el.setAttribute('data-name', wish.name);
                 
+                el.style.borderRadius = getRandomBlobShape();
+
                 // Internal Label for Tooltip
                 const label = document.createElement('span');
-                label.classList.add('star-label');
+                label.classList.add('particle-label');
                 label.innerText = wish.name;
                 el.appendChild(label);
                 
                 // Random Size
-                const size = 10 + Math.random() * 6;
+                const size = 14 + Math.random() * 10;
                 el.style.width = `${size}px`;
                 el.style.height = `${size}px`;
 
                 // Random Positioning
                 const angle = Math.random() * Math.PI * 2;
-                const distance = 22 + Math.random() * 26; 
+                const distance = 24 + Math.random() * 24; 
                 const x = 50 + distance * Math.cos(angle); 
                 const y = 50 + distance * Math.sin(angle); 
                 
@@ -348,9 +333,10 @@
                 el.style.top = y + '%';
 
                 // Drifting Animation
-                const duration = 15 + Math.random() * 20; 
+                const duration = 18 + Math.random() * 25; 
                 el.style.animation = `drift ${duration}s ease-in-out infinite alternate`;
                 el.style.animationDelay = `-${Math.random() * 20}s`;
+                el.style.transform = `rotate(${Math.random() * 360}deg)`;
 
                 // Interaction
                 el.addEventListener('click', (e) => {
@@ -363,7 +349,6 @@
         }
 
         function handlePlay(filename, element) {
-            // Toggle Logic
             if (currentAudio && currentPlayingUrl === filename && !currentAudio.paused) {
                 stopAudio();
                 return;
@@ -376,7 +361,7 @@
                 currentAudio.pause();
                 currentAudio.currentTime = 0;
             }
-            document.querySelectorAll('.star').forEach(d => d.classList.remove('playing'));
+            document.querySelectorAll('.particle').forEach(d => d.classList.remove('playing'));
             currentPlayingUrl = null;
         }
 
@@ -405,34 +390,75 @@
             }
         }
 
-        function filterStars() {
+        function filterParticles() {
             const input = document.getElementById('searchInput').value.toLowerCase();
-            const stars = document.querySelectorAll('.star');
+            const particles = document.querySelectorAll('.particle');
 
-            stars.forEach(star => {
-                const name = star.getAttribute('data-name').toLowerCase();
+            particles.forEach(p => {
+                const name = p.getAttribute('data-name').toLowerCase();
                 if (input.length > 0 && name.includes(input)) {
-                    star.classList.add('matched');
+                    p.classList.add('matched');
                 } else {
-                    star.classList.remove('matched');
+                    p.classList.remove('matched');
                 }
             });
         }
 
-        // --- INTERACTIVE PARALLAX (MOUSE/TOUCH) ---
-        // Moves the galaxy slightly opposite to mouse/touch to create depth
-        document.addEventListener('mousemove', (e) => {
-            const x = (window.innerWidth - e.pageX * 2) / 25;
-            const y = (window.innerHeight - e.pageY * 2) / 25;
+        // --- UNIFIED PARALLAX (MOUSE + MOTION) ---
+        
+        // 1. Mouse/Touch Fallback
+        function updateParallax(x, y) {
             galaxyContainer.style.transform = `translateX(${x}px) translateY(${y}px)`;
-        });
+        }
 
-        // Touch parallax for mobile (Basic)
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth - e.pageX * 2) / 30;
+            const y = (window.innerHeight - e.pageY * 2) / 30;
+            updateParallax(x, y);
+        });
+        
         document.addEventListener('touchmove', (e) => {
             const touch = e.touches[0];
-            const x = (window.innerWidth - touch.pageX * 2) / 25;
-            const y = (window.innerHeight - touch.pageY * 2) / 25;
-            galaxyContainer.style.transform = `translateX(${x}px) translateY(${y}px)`;
+            const x = (window.innerWidth - touch.pageX * 2) / 30;
+            const y = (window.innerHeight - touch.pageY * 2) / 30;
+            updateParallax(x, y);
+        });
+
+        // 2. Motion Sensor Logic (Gyroscope)
+        function handleMotion(e) {
+            // Beta is front/back tilt (-180 to 180)
+            // Gamma is left/right tilt (-90 to 90)
+            const x = e.gamma * 2; // Amplify movement
+            const y = e.beta * 2;
+            
+            // Limit the movement range so it doesn't go off screen
+            const limitedX = Math.max(-50, Math.min(50, x));
+            const limitedY = Math.max(-50, Math.min(50, y));
+
+            updateParallax(limitedX, limitedY);
+        }
+
+        // 3. Permission Request (Required for iOS 13+)
+        // We hook this to the first interaction with the body
+        let permissionRequested = false;
+
+        document.body.addEventListener('click', () => {
+            if (permissionRequested) return;
+            permissionRequested = true;
+
+            // Check if DeviceOrientationEvent exists and needs permission (iOS 13+)
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', handleMotion);
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Non-iOS devices usually allow this by default
+                window.addEventListener('deviceorientation', handleMotion);
+            }
         });
 
         // Initialize
