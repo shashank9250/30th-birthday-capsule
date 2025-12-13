@@ -21,10 +21,9 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            overscroll-behavior: none; 
         }
 
-        /* Container for Parallax */
+        /* Container - Stable (No Parallax) */
         #galaxy-container {
             position: relative;
             width: 100%;
@@ -32,9 +31,6 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: transform 0.2s cubic-bezier(0.215, 0.61, 0.355, 1); /* Smoother transition for sensors */
-            transform-style: preserve-3d;
-            will-change: transform;
         }
 
         /* --- THE CENTER IMAGE --- */
@@ -49,7 +45,6 @@
             filter: drop-shadow(0 0 40px rgba(80, 40, 200, 0.5));
             user-select: none;
             pointer-events: none; 
-            transition: transform 0.5s ease;
         }
 
         /* --- THE NEBULA PARTICLES --- */
@@ -57,7 +52,8 @@
             position: absolute;
             background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(200, 200, 255, 0.6));
             backdrop-filter: blur(4px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            /* Very subtle border to define shape without being harsh */
+            border: 1px solid rgba(255, 255, 255, 0.15);
             cursor: pointer;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), inset 0 0 10px rgba(255,255,255,0.5);
             z-index: 20;
@@ -81,19 +77,55 @@
             border-color: rgba(255,255,255,0.6);
         }
 
-        /* --- PLAYING STATE --- */
+        /* --- PLAYING STATE (Soft Ripple) --- */
         .particle.playing {
             background: radial-gradient(circle at 30% 30%, #aaffff, #00ffcc);
-            box-shadow: 0 0 40px #00ffcc, 0 0 80px rgba(0, 255, 204, 0.6), inset 0 0 20px #ffffff;
+            box-shadow: 0 0 40px #00ffcc, inset 0 0 20px #ffffff;
             z-index: 35;
             border-color: transparent;
-            animation: organic-pulse 3s ease-in-out infinite alternate !important;
+            /* Gentle vibration */
+            animation: organic-pulse 2s ease-in-out infinite alternate !important;
+        }
+
+        /* The Soft Ripple Waves */
+        .particle.playing::before,
+        .particle.playing::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%; height: 100%;
+            /* Inherit the random blob shape */
+            border-radius: inherit; 
+            /* Soft glow, no hard border */
+            box-shadow: 0 0 15px 2px rgba(0, 255, 204, 0.6);
+            z-index: -1;
+            opacity: 0;
+        }
+
+        .particle.playing::before {
+            animation: soft-ripple 1.5s infinite ease-out;
+        }
+
+        .particle.playing::after {
+            animation: soft-ripple 1.5s infinite ease-out;
+            animation-delay: 0.5s; /* Staggered wave */
+        }
+
+        @keyframes soft-ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2.5);
+                opacity: 0;
+            }
         }
 
         @keyframes organic-pulse {
-            0% { transform: scale(1.2); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-            50% { transform: scale(1.35); border-radius: 40% 60% 70% 30% / 50% 60% 30% 60%; }
-            100% { transform: scale(1.2); border-radius: 70% 30% 50% 50% / 30% 70% 60% 40%; }
+            0% { transform: scale(1.1); }
+            100% { transform: scale(1.2); }
         }
 
         /* --- SEARCH MATCH STATE --- */
@@ -194,20 +226,6 @@
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.6);
         }
-        
-        /* Hint text for first interaction */
-        .tap-hint {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            text-align: center;
-            opacity: 0.5;
-            font-size: 12px;
-            pointer-events: none;
-            animation: fadeOut 5s forwards;
-            animation-delay: 3s;
-        }
-        @keyframes fadeOut { to { opacity: 0; } }
 
     </style>
 </head>
@@ -224,8 +242,6 @@
         <img src="image.png" alt="30" class="center-img" onerror="this.style.display='none'; document.querySelector('.fallback-text').style.display='block'">
         <div class="center-sun fallback-text" style="display:none; font-size: 15vw; font-weight: 700; background: linear-gradient(45deg, #ff00cc, #3333ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">30</div>
     </div>
-    
-    <div class="tap-hint">Tap anywhere to enable audio & motion</div>
 
     <script>
         // ---------------------------------------------------------
@@ -403,63 +419,6 @@
                 }
             });
         }
-
-        // --- UNIFIED PARALLAX (MOUSE + MOTION) ---
-        
-        // 1. Mouse/Touch Fallback
-        function updateParallax(x, y) {
-            galaxyContainer.style.transform = `translateX(${x}px) translateY(${y}px)`;
-        }
-
-        document.addEventListener('mousemove', (e) => {
-            const x = (window.innerWidth - e.pageX * 2) / 30;
-            const y = (window.innerHeight - e.pageY * 2) / 30;
-            updateParallax(x, y);
-        });
-        
-        document.addEventListener('touchmove', (e) => {
-            const touch = e.touches[0];
-            const x = (window.innerWidth - touch.pageX * 2) / 30;
-            const y = (window.innerHeight - touch.pageY * 2) / 30;
-            updateParallax(x, y);
-        });
-
-        // 2. Motion Sensor Logic (Gyroscope)
-        function handleMotion(e) {
-            // Beta is front/back tilt (-180 to 180)
-            // Gamma is left/right tilt (-90 to 90)
-            const x = e.gamma * 2; // Amplify movement
-            const y = e.beta * 2;
-            
-            // Limit the movement range so it doesn't go off screen
-            const limitedX = Math.max(-50, Math.min(50, x));
-            const limitedY = Math.max(-50, Math.min(50, y));
-
-            updateParallax(limitedX, limitedY);
-        }
-
-        // 3. Permission Request (Required for iOS 13+)
-        // We hook this to the first interaction with the body
-        let permissionRequested = false;
-
-        document.body.addEventListener('click', () => {
-            if (permissionRequested) return;
-            permissionRequested = true;
-
-            // Check if DeviceOrientationEvent exists and needs permission (iOS 13+)
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(response => {
-                        if (response === 'granted') {
-                            window.addEventListener('deviceorientation', handleMotion);
-                        }
-                    })
-                    .catch(console.error);
-            } else {
-                // Non-iOS devices usually allow this by default
-                window.addEventListener('deviceorientation', handleMotion);
-            }
-        });
 
         // Initialize
         createGalaxy();
